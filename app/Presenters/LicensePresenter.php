@@ -98,6 +98,7 @@ class LicensePresenter extends Presenter
                 "sortable" => true,
                 "visible" => false,
                 "title" => trans('general.purchase_cost'),
+                "footerFormatter" => 'sumFormatter',
             ], [
                 "field" => "purchase_order",
                 "searchable" => true,
@@ -110,6 +111,12 @@ class LicensePresenter extends Presenter
                 "sortable" => true,
                 "visible" => false,
                 "title" => trans('general.order_number'),
+            ], [
+                "field" => "notes",
+                "searchable" => true,
+                "sortable" => true,
+                "visible" => false,
+                "title" => trans('general.notes'),
             ]
         ];
 
@@ -145,6 +152,16 @@ class LicensePresenter extends Presenter
     {
         return (string)link_to_route('licenses.show', $this->name, $this->id);
     }
+
+    /**
+     * Link to this licenses Name
+     * @return string
+     */
+    public function fullName()
+    {
+        return $this->name;
+    }
+
 
     /**
      * Link to this licenses serial

@@ -112,7 +112,7 @@ class AssetPresenter extends Presenter
                 "sortable" => true,
                 "title" => trans('admin/hardware/table.location'),
                 "visible" => true,
-                "formatter" => "locationsLinkObjFormatter"
+                "formatter" => "deployedLocationFormatter"
             ],  [
                 "field" => "manufacturer",
                 "searchable" => true,
@@ -139,6 +139,7 @@ class AssetPresenter extends Presenter
                 "searchable" => true,
                 "sortable" => true,
                 "title" => trans('general.purchase_cost'),
+                "footerFormatter" => 'sumFormatter',
             ], [
                 "field" => "order_number",
                 "searchable" => true,
@@ -325,6 +326,24 @@ class AssetPresenter extends Presenter
         return $interval;
     }
 
+    /**
+     * @return string
+     * This handles the status label "meta" status of "deployed" if
+     * it's assigned. Should maybe deprecate.
+     */
+    public function statusMeta()
+    {
+        if ($this->model->assignedTo) {
+            return strtolower(trans('general.deployed'));
+        }
+        return $this->model->assetstatus->getStatuslabelType();
+    }
+
+    /**
+     * @return string
+     * This handles the status label "meta" status of "deployed" if
+     * it's assigned. Should maybe deprecate.
+     */
     public function statusText()
     {
         if ($this->model->assignedTo) {
@@ -332,6 +351,7 @@ class AssetPresenter extends Presenter
         }
         return $this->model->assetstatus->name;
     }
+
     /**
      * Date the warantee expires.
      * @return false|string

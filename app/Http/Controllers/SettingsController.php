@@ -21,6 +21,7 @@ use App\Models\User;
 use App\Http\Requests\SetupUserRequest;
 use App\Http\Requests\ImageUploadRequest;
 use App\Http\Requests\SettingsLdapRequest;
+use App\Helpers\Helper;
 
 /**
  * This controller handles all actions related to Settings for
@@ -136,28 +137,6 @@ class SettingsController extends Controller
         ->with('section', 'Pre-Flight Check');
     }
 
-    /**
-    * Test the email configuration
-    *
-    * @author [A. Gianotto] [<snipe@snipe.net>]
-    * @since [v3.0]
-    * @return Redirect
-    */
-    public function ajaxTestEmail()
-    {
-
-        try {
-            Mail::send('emails.test', [], function ($m) {
-                $m->to(config('mail.from.address'), config('mail.from.name'));
-                $m->replyTo(config('mail.reply_to.address'), config('mail.reply_to.name'));
-                $m->subject(trans('mail.test_email'));
-            });
-            return 'success';
-        } catch (Exception $e) {
-            return 'error';
-        }
-
-    }
 
     /**
     * Save the first admin user from Setup.
@@ -263,8 +242,8 @@ class SettingsController extends Controller
         $output = Artisan::output();
 
         if ((!file_exists(storage_path().'/oauth-private.key')) || (!file_exists(storage_path().'/oauth-public.key'))) {
-            Artisan::call('passport:install');
             Artisan::call('migrate', ['--force' => true]);
+            Artisan::call('passport:install');
         }
 
 
@@ -338,7 +317,10 @@ class SettingsController extends Controller
         $setting->email_format = $request->input('email_format');
         $setting->username_format = $request->input('username_format');
         $setting->require_accept_signature = $request->input('require_accept_signature');
-        $setting->login_note = $request->input('login_note');
+        if (!config('app.lock_passwords')) {
+            $setting->login_note = $request->input('login_note');
+        }
+
         $setting->default_eula_text = $request->input('default_eula_text');
         $setting->thumbnail_max_h = $request->input('thumbnail_max_h');
 
@@ -388,6 +370,7 @@ class SettingsController extends Controller
 
         $setting->brand = $request->input('brand', '1');
         $setting->header_color = $request->input('header_color');
+        $setting->show_url_in_emails = $request->input('show_url_in_emails', '0');
 
 
         // Only allow the site name and CSS to be changed if lock_passwords is false
@@ -411,7 +394,7 @@ class SettingsController extends Controller
                 $file_name = "logo.".$image->getClientOriginalExtension();
                 $path = public_path('uploads');
                 if ($image->getClientOriginalExtension()!='svg') {
-                    Image::make($image->getRealPath())->resize(null, 40, function ($constraint) {
+                    Image::make($image->getRealPath())->resize(null, 150, function ($constraint) {
                         $constraint->aspectRatio();
                         $constraint->upsize();
                     })->save($path.'/'.$file_name);
@@ -843,6 +826,7 @@ class SettingsController extends Controller
         $setting->is_ad = $request->input('is_ad', '0');
         $setting->ldap_tls = $request->input('ldap_tls', '0');
         $setting->ldap_pw_sync = $request->input('ldap_pw_sync', '0');
+        $setting->custom_forgot_pass_url = $request->input('custom_forgot_pass_url');
 
         if ($setting->save()) {
             return redirect()->route('settings.index')
@@ -992,6 +976,8 @@ class SettingsController extends Controller
     {
         if (!config('app.lock_passwords')) {
             if (Input::get('confirm_purge')=='DELETE') {
+                // Run a backup immediately before processing
+                Artisan::call('backup:run');
                 Artisan::call('snipeit:purge', ['--force'=>'true','--no-interaction'=>true]);
                 $output = Artisan::output();
                 return view('settings/purge')
@@ -1017,5 +1003,29 @@ class SettingsController extends Controller
      */
     public function api() {
         return view('settings.api');
+    }
+
+
+
+    /**
+     * Test the email configuration
+     *
+     * @author [A. Gianotto] [<snipe@snipe.net>]
+     * @since [v3.0]
+     * @return Redirect
+     */
+    public function ajaxTestEmail()
+    {
+        try {
+            Mail::send('emails.test', [], function ($m) {
+                $m->to(config('mail.from.address'), config('mail.from.name'));
+                $m->replyTo(config('mail.reply_to.address'), config('mail.reply_to.name'));
+                $m->subject(trans('mail.test_email'));
+            });
+            return response()->json(Helper::formatStandardApiResponse('success', null, 'Maiol sent!'));
+        } catch (Exception $e) {
+            return response()->json(Helper::formatStandardApiResponse('success', null, $e->getMessage()));
+        }
+
     }
 }

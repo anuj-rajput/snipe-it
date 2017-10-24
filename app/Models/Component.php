@@ -53,6 +53,7 @@ class Component extends SnipeModel
         'name',
         'purchase_cost',
         'purchase_date',
+        'min_amt',
         'qty',
     ];
 
@@ -63,7 +64,7 @@ class Component extends SnipeModel
 
     public function assets()
     {
-        return $this->belongsToMany('\App\Models\Asset', 'components_assets')->withPivot('assigned_qty', 'created_at', 'user_id');
+        return $this->belongsToMany('\App\Models\Asset', 'components_assets')->withPivot('id', 'assigned_qty', 'created_at', 'user_id');
     }
 
     public function admin()

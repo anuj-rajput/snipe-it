@@ -187,6 +187,7 @@ class LicensesController extends Controller
         $license->termination_date  = $request->input('termination_date');
         $license->seats             = e($request->input('seats'));
         $license->manufacturer_id   =  $request->input('manufacturer_id');
+        $license->supplier_id       = $request->input('supplier_id');
 
         if ($license->save()) {
             return redirect()->route('licenses.show', ['license' => $licenseId])->with('success', trans('admin/licenses/message.update.success'));
@@ -279,7 +280,7 @@ class LicensesController extends Controller
 
         // Declare the rules for the form validation
         $rules = [
-            'note'   => 'string',
+            'note'   => 'string|nullable',
             'asset_id'  => 'required_without:assigned_to',
         ];
 
@@ -306,8 +307,8 @@ class LicensesController extends Controller
                 return redirect()->route('licenses.index')->with('error', trans('admin/licenses/message.asset_does_not_exist'));
             }
 
-            if (($target->assigned_to!='') && (($target->assigned_to!=$assigned_to)) && ($target!='')) {
-                return redirect()->route('licenses.index')->with('error', trans('admin/licenses/message.owner_doesnt_match_asset'));
+            if (($request->has('assigned_to')) && ($request->has('asset_id'))) {
+                return redirect()->back()->withInput()->with('error', trans('admin/licenses/message.select_asset_or_person'));
             }
         }
 
@@ -334,15 +335,14 @@ class LicensesController extends Controller
         if ($licenseSeat->save()) {
             $licenseSeat->logCheckout($request->input('note'), $target);
 
-            $data['license_id'] =$licenseSeat->license_id;
+            $data['license_id'] = $licenseSeat->license_id;
             $data['note'] = $request->input('note');
 
             // Redirect to the new asset page
             return redirect()->route("licenses.index")->with('success', trans('admin/licenses/message.checkout.success'));
         }
-
-        // Redirect to the asset management page with error
-        return redirect()->to("admin/licenses/{$asset_id}/checkout")->with('error', trans('admin/licenses/message.create.error'))->with('license', new License);
+        
+        return redirect()->route("licenses.index")->with('error', trans('admin/licenses/message.checkout.error'));
     }
 
 
@@ -358,12 +358,12 @@ class LicensesController extends Controller
     public function getCheckin($seatId = null, $backTo = null)
     {
         // Check if the asset exists
-        if (is_null($licenseseat = LicenseSeat::find($seatId))) {
+        if (is_null($licenseSeat = LicenseSeat::find($seatId))) {
             // Redirect to the asset management page with error
             return redirect()->route('licenses.index')->with('error', trans('admin/licenses/message.not_found'));
         }
-        $this->authorize('checkin', $licenseseat);
-        return view('licenses/checkin', compact('licenseseat'))->with('backto', $backTo);
+        $this->authorize('checkin', $licenseSeat);
+        return view('licenses/checkin', compact('licenseSeat'))->with('backto', $backTo);
     }
 
 
@@ -441,17 +441,15 @@ class LicensesController extends Controller
     public function show($licenseId = null)
     {
 
-        $license = License::find($licenseId);
-        $license = $license->load('assignedusers', 'licenseSeats.user', 'licenseSeats.asset');
+        $license = License::with('assignedusers', 'licenseSeats.user', 'licenseSeats.asset')->find($licenseId);
 
-        if (isset($license->id)) {
-            $license = $license->load('assignedusers', 'licenseSeats.user', 'licenseSeats.asset');
+        if ($license) {
             $this->authorize('view', $license);
             return view('licenses/view', compact('license'));
         }
-        $error = trans('admin/licenses/message.does_not_exist', compact('id'));
-        return redirect()->route('licenses.index')->with('error', $error);
+        return redirect()->route('licenses.index')->with('error', trans('admin/licenses/message.does_not_exist', compact('id')));
     }
+    
 
     public function getClone($licenseId = null)
     {
@@ -491,7 +489,7 @@ class LicensesController extends Controller
     * @param int $licenseId
     * @return \Illuminate\Http\RedirectResponse
      */
-    public function postUpload($licenseId = null)
+    public function postUpload(Request $request, $licenseId = null)
     {
         $license = License::find($licenseId);
         // the license is valid
@@ -520,13 +518,16 @@ class LicensesController extends Controller
                     //Log the upload to the log
                     $license->logUpload($filename, e($request->input('notes')));
                 }
-
+                // This being called from a modal seems to confuse redirect()->back()
+                // It thinks we should go to the dashboard.  As this is only used
+                // from the modal at present, hardcode the redirect.  Longterm
+                // maybe we evaluate something else.
                 if ($upload_success) {
-                    return redirect()->back()->with('success', trans('admin/licenses/message.upload.success'));
+                    return redirect()->route('licenses.show', $license->id)->with('success', trans('admin/licenses/message.upload.success'));
                 }
-                return redirect()->back()->with('error', trans('admin/licenses/message.upload.error'));
+                return redirect()->route('licenses.show', $license->id)->with('error', trans('admin/licenses/message.upload.error'));
             }
-            return redirect()->back()->with('error', trans('admin/licenses/message.upload.nofiles'));
+            return redirect()->route('licenses.show', $license->id)->with('error', trans('admin/licenses/message.upload.nofiles'));
         }
         // Prepare the error message
         $error = trans('admin/licenses/message.does_not_exist', compact('id'));
@@ -589,61 +590,10 @@ class LicensesController extends Controller
             $file = $log->get_src('licenses');
             return Response::download($file);
         }
-        // Prepare the error message
-        $error = trans('admin/licenses/message.does_not_exist', compact('id'));
-        // Redirect to the licence management page
-        return redirect()->route('licenses.index')->with('error', $error);
+        return redirect()->route('licenses.index')->with('error', trans('admin/licenses/message.does_not_exist', compact('id')));
     }
 
 
-    /**
-    * Generates a JSON response to populate the licence index datatables.
-    *
-    * @author [A. Gianotto] [<snipe@snipe.net>]
-    * @see LicensesController::getIndex() method that provides the view
-    * @since [v1.0]
-    * @return String JSON
-    */
-    public function getDatatable(Request $request)
-    {
-        $this->authorize('view', License::class);
-        $licenses = Company::scopeCompanyables(License::with('company', 'licenseSeatsRelation', 'manufacturer'));
-
-        if (Input::has('search')) {
-            $licenses = $licenses->TextSearch($request->input('search'));
-        }
-        $offset = request('offset', 0);
-        $limit = request('limit', 50);
-
-        $allowed_columns = ['id','name','purchase_cost','expiration_date','purchase_order','order_number','notes','purchase_date','serial','manufacturer','company'];
-        $order = $request->input('order') === 'asc' ? 'asc' : 'desc';
-        $sort = in_array($request->input('sort'), $allowed_columns) ? e($request->input('sort')) : 'created_at';
-
-        switch ($sort) {
-            case 'manufacturer':
-                $licenses = $licenses->OrderManufacturer($order);
-                break;
-            case 'company':
-                $licenses = $licenses->OrderCompany($order);
-                break;
-            default:
-                $licenses = $licenses->orderBy($sort, $order);
-                break;
-        }
-
-        $licenseCount = $licenses->count();
-        $licenses = $licenses->skip($offset)->take($limit)->get();
-
-        $rows = array();
-
-        foreach ($licenses as $license) {
-            $rows[] = $license->present()->forDataTable();
-        }
-
-        $data = array('total' => $licenseCount, 'rows' => $rows);
-
-        return $data;
-    }
 
     /**
     * Generates the next free seat ID for checkout.

@@ -33,7 +33,8 @@ class AssetsTransformer
             'model_number' => ($asset->model) ? e($asset->model->model_number) : null,
             'status_label' => ($asset->assetstatus) ? [
                 'id' => (int) $asset->assetstatus->id,
-                'name'=> e($asset->assetstatus->name)
+                'name'=> e($asset->present()->statusText),
+                'status_meta' =>  e($asset->present()->statusMeta),
             ] : null,
             'category' => ($asset->model->category) ? [
                 'id' => (int) $asset->model->category->id,
@@ -75,8 +76,9 @@ class AssetsTransformer
         ];
 
 
-        if ($asset->model->fieldset) {
+        if (($asset->model->fieldset) && (count($asset->model->fieldset->fields)> 0)) {
             $fields_array = array();
+
             foreach ($asset->model->fieldset->fields as $field) {
 
                 if ($field->isFieldDecryptable($asset->{$field->convertUnicodeDbSlug()})) {

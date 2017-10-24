@@ -31,6 +31,7 @@ class UsersController extends Controller
             'users.two_factor_enrolled',
             'users.jobtitle',
             'users.email',
+            'users.phone',
             'users.username',
             'users.location_id',
             'users.manager_id',
@@ -57,13 +58,16 @@ class UsersController extends Controller
             $users = $users->GetDeleted();
         }
 
-
         if ($request->has('company_id')) {
             $users = $users->where('company_id', '=', $request->input('company_id'));
         }
 
         if ($request->has('location_id')) {
             $users = $users->where('location_id', '=', $request->input('location_id'));
+        }
+        
+        if ($request->has('group_id')) {
+            $users = $users->ByGroup($request->has('group_id'));
         }
 
         if ($request->has('department_id')) {
@@ -89,7 +93,8 @@ class UsersController extends Controller
                     [
                         'last_name','first_name','email','jobtitle','username','employee_num',
                         'assets','accessories', 'consumables','licenses','groups','activated','created_at',
-                        'two_factor_enrolled','two_factor_optin','last_login'
+                        'two_factor_enrolled','two_factor_optin','last_login', 'assets_count', 'licenses_count',
+                        'consumables_count', 'accessories_count', 'phone'
                     ];
 
                 $sort = in_array($request->get('sort'), $allowed_columns) ? $request->get('sort') : 'first_name';

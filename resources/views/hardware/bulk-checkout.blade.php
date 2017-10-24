@@ -82,13 +82,14 @@
               {!! $errors->first('selected_asset', '<span class="alert-msg"><i class="fa fa-times"></i> :message</span>') !!}
             </div>
           </div>
-        </form>
+
       </div> <!--./box-body-->
       <div class="box-footer">
         <a class="btn btn-link" href="{{ URL::previous() }}"> {{ trans('button.cancel') }}</a>
         <button type="submit" class="btn btn-success pull-right"><i class="fa fa-check icon-white"></i> {{ trans('general.checkout') }}</button>
       </div>
     </div>
+      </form>
   </div> <!--/.col-md-7-->
 
   <!-- right column -->
@@ -107,7 +108,7 @@
 @stop
 
 @section('moar_scripts')
-<script>
+<script nonce="{{ csrf_token() }}">
 $(function() {
   $('#assigned_to').on("change",function () {
     // console.warn("Model Id has changed!");

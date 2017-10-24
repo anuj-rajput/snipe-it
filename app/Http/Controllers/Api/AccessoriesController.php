@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Helpers\Helper;
 use App\Models\Accessory;
 use App\Http\Transformers\AccessoriesTransformer;
+use App\Models\Company;
 
 
 class AccessoriesController extends Controller
@@ -35,6 +36,10 @@ class AccessoriesController extends Controller
 
         if ($request->has('manufacturer_id')) {
             $accessories->where('manufacturer_id','=',$request->input('manufacturer_id'));
+        }
+
+        if ($request->has('supplier_id')) {
+            $accessories->where('supplier_id','=',$request->input('supplier_id'));
         }
 
         $offset = $request->input('offset', 0);
@@ -128,10 +133,15 @@ class AccessoriesController extends Controller
     public function checkedout($id)
     {
         $this->authorize('view', Accessory::class);
-        $accessory = Accessory::findOrFail($id)->with('users')->first();
-        $accessories_users = $accessory->users;
-        $total = $accessories_users->count();
-        return (new AccessoriesTransformer)->transformCheckedoutAccessories($accessories_users, $total);
+
+        $accessory = Accessory::findOrFail($id);
+        if (!Company::isCurrentUserHasAccess($accessory)) {
+            return ['total' => 0, 'rows' => []];
+        }
+        $accessory_users = $accessory->users;
+        $total = $accessory_users->count();
+
+        return (new AccessoriesTransformer)->transformCheckedoutAccessory($accessory_users, $total);
     }
 
 

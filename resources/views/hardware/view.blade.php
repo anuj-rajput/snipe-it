@@ -87,8 +87,8 @@
                             &nbsp; &nbsp;</span>
                         </span>
                         @endif
-                        {{ $asset->present()->statusText() }}
-                        ({{ $asset->assetstatus->getStatuslabelType() }})
+                        <a href="{{ route('statuslabels.show', $asset->assetstatus->id) }}">{{ $asset->assetstatus->name }}</a>
+                          <label class="label label-default">{{ $asset->present()->statusMeta }}</label>
                       </td>
                     </tr>
                     @endif
@@ -544,7 +544,13 @@
                     @foreach ($asset->assetmaintenances as $assetMaintenance)
                       @if (is_null($assetMaintenance->deleted_at))
                         <tr>
-                          <td><a href="{{ route('suppliers.show', $assetMaintenance->supplier_id) }}">{{ $assetMaintenance->supplier->name }}</a></td> 
+                          <td>
+                            @if ($assetMaintenance->supplier)
+                              <a href="{{ route('suppliers.show', $assetMaintenance->supplier_id) }}">{{ $assetMaintenance->supplier->name }}</a>
+                            @else
+                                (deleted supplier)
+                            @endif
+                          </td>
                           <td>{{ $assetMaintenance->title }}</td>
                           <td>{{ $assetMaintenance->asset_maintenance_type }}</td>
                           <td>{{ $assetMaintenance->start_date }}</td>
@@ -603,6 +609,9 @@
                   <th class="col-sm-2" data-field="item" data-formatter="polymorphicItemFormatter">{{ trans('general.item') }}</th>
                   <th class="col-sm-2" data-field="target" data-formatter="polymorphicItemFormatter">{{ trans('general.target') }}</th>
                   <th class="col-sm-2" data-field="note">{{ trans('general.notes') }}</th>
+                  @if  ($snipeSettings->require_accept_signature=='1')
+                    <th class="col-md-3" data-field="signature_file" data-formatter="imageFormatter">{{ trans('general.signature') }}</th>
+                  @endif
                 </tr>
                 </thead>
               </table>
@@ -700,7 +709,7 @@
 @section('moar_scripts')
   @include ('partials.bootstrap-table', ['simple_view' => true])
 
-<script>
+<script nonce="{{ csrf_token() }}">
     $(document).delegate('*[data-toggle="lightbox"]', 'click', function(event) {
         event.preventDefault();
         $(this).ekkoLightbox();

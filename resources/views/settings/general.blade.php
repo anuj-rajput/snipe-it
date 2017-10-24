@@ -22,7 +22,7 @@
 
 
 
-    {{ Form::open(['method' => 'POST', 'files' => true, 'class' => 'form-horizontal', 'role' => 'form' ]) }}
+    {{ Form::open(['method' => 'POST', 'files' => false, 'autocomplete' => 'off', 'class' => 'form-horizontal', 'role' => 'form' ]) }}
     <!-- CSRF Token -->
     {{csrf_field()}}
 
@@ -165,9 +165,9 @@
                             {{ Form::label('login_note', trans('admin/settings/general.login_note')) }}
                         </div>
                         <div class="col-md-9">
-                            @if (config('app.lock_passwords')===true)
+                            @if (config('app.lock_passwords'))
 
-                                <textarea class="form-control" name="login_note" placeholder="If you do not have a login or have found a device belonging to this company, please call technical support at 888-555-1212. Thank you." rows="2">{{ Input::old('login_note', $setting->login_note) }}</textarea>
+                                <textarea class="form-control disabled" name="login_note" placeholder="If you do not have a login or have found a device belonging to this company, please call technical support at 888-555-1212. Thank you." rows="2" readonly>{{ Input::old('login_note', $setting->login_note) }}</textarea>
                                 {!! $errors->first('login_note', '<span class="alert-msg">:message</span>') !!}
                                 <p class="help-block">{{ trans('general.lock_passwords') }}</p>
                             @else
@@ -177,6 +177,27 @@
                             <p class="help-block">{!!  trans('admin/settings/general.login_note_help') !!}</p>
                         </div>
                     </div>
+
+                       <!-- Mail test -->
+                       <div class="form-group">
+                           <div class="col-md-3">
+                               {{ Form::label('login_note', 'Test Mail') }}
+                           </div>
+                           <div class="col-md-9" id="mailtestrow">
+                               <a class="btn btn-default btn-sm pull-left" id="mailtest" style="margin-right: 10px;">
+                                   Send Test</a>
+                               <span id="mailtesticon"></span>
+                               <span id="mailtestresult"></span>
+                               <span id="mailteststatus"></span>
+                           </div>
+                           <div class="col-md-9 col-md-offset-3">
+                               <div id="mailteststatus-error" class="text-danger"></div>
+                           </div>
+                           <div class="col-md-9 col-md-offset-3">
+                               <p class="help-block">This will attempt to send a test mail to {{ config('mail.from.address') }}.</p>
+                           </div>
+
+                       </div>
 
             </div> <!--/.box-body-->
             <div class="box-footer">
@@ -193,13 +214,13 @@
     </div> <!-- /.col-md-8-->
     </div> <!-- /.row-->
 
-    {{Form::close()}}
+    {{ Form::close() }}
 
 @stop
 
 @section('moar_scripts')
     <!-- bootstrap color picker -->
-    <script>
+    <script nonce="{{ csrf_token() }}">
         //color picker with addon
         $(".header-color").colorpicker();
         // toggle the disabled state of asset id prefix
@@ -208,5 +229,61 @@
         }).on('ifUnchecked', function(){
             $('#auto_increment_prefix').prop('disabled', true);
         });
+
+
+        // Test Mail
+        $("#mailtest").click(function(){
+            $("#mailtestrow").removeClass('text-success');
+            $("#mailtestrow").removeClass('text-danger');
+            $("#mailtesticon").html('');
+            $("#mailteststatus").html('');
+            $('#mailteststatus-error').html('');
+            $("#mailtesticon").html('<i class="fa fa-spinner spin"></i> Sending Test Email...');
+            $.ajax({
+                url: '{{ route('api.settings.mailtest') }}',
+                type: 'POST',
+                headers: {
+                    "X-Requested-With": 'XMLHttpRequest',
+                    "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr('content')
+                },
+                data: {},
+                dataType: 'json',
+
+                success: function (data) {
+                    console.dir(data);
+                    $("#mailtesticon").html('');
+                    $("#mailteststatus").html('');
+                    $('#mailteststatus-error').html('');
+                    $("#mailteststatus").removeClass('text-danger');
+                    $("#mailteststatus").addClass('text-success');
+                    if (data.message) {
+                        $("#mailteststatus").html('<i class="fa fa-check text-success"></i> ' + data.message);
+                    } else {
+                        $("#mailteststatus").html('<i class="fa fa-check text-success"></i> Mail sent!');
+                    }
+                },
+
+                error: function (data) {
+
+                    $("#mailtesticon").html('');
+                    $("#mailteststatus").html('');
+                    $('#mailteststatus-error').html('');
+                    $("#mailteststatus").removeClass('text-success');
+                    $("#mailteststatus").addClass('text-danger');
+                    $("#mailtesticon").html('<i class="fa fa-exclamation-triangle text-danger"></i>');
+                    $('#mailteststatus').html('Mail could not be sent.');
+                    if (data.responseJSON) {
+                        $('#mailteststatus-error').html('Error: ' + data.responseJSON.messages);
+                    } else {
+                        console.dir(data);
+                    }
+
+                }
+
+
+            });
+        });
+
+
     </script>
 @stop

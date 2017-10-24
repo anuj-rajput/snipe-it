@@ -74,20 +74,20 @@ class ComponentsController extends Controller
     * @since [v3.0]
     * @return \Illuminate\Http\RedirectResponse
      */
-    public function store()
+    public function store(Request $request)
     {
         $this->authorize('create', Component::class);
         $component = new Component();
-        $component->name                   = Input::get('name');
-        $component->category_id            = Input::get('category_id');
-        $component->location_id            = Input::get('location_id');
-        $component->company_id             = Company::getIdForCurrentUser(Input::get('company_id'));
-        $component->order_number           = Input::get('order_number');
-        $component->min_amt                = Input::get('min_amt');
-        $component->serial                 = Input::get('serial');
-        $component->purchase_date       = Input::get('purchase_date');
-        $component->purchase_cost       = request('purchase_cost');
-        $component->qty                    = Input::get('qty');
+        $component->name                   = $request->input('name');
+        $component->category_id            = $request->input('category_id');
+        $component->location_id            = $request->input('location_id');
+        $component->company_id             = Company::getIdForCurrentUser($request->input('company_id'));
+        $component->order_number           = $request->input('order_number', null);
+        $component->min_amt                = $request->input('min_amt', null);
+        $component->serial                 = $request->input('serial', null);
+        $component->purchase_date          = $request->input('purchase_date', null);
+        $component->purchase_cost          = $request->input('purchase_cost', null);
+        $component->qty                    = $request->input('qty');
         $component->user_id                = Auth::id();
 
         if ($component->save()) {
@@ -288,35 +288,4 @@ class ComponentsController extends Controller
     }
 
 
-    /**
-    * Return JSON data to populate the components view,
-    *
-    * @author [A. Gianotto] [<snipe@snipe.net>]
-    * @see ComponentsController::getView() method that returns the view.
-    * @since [v3.0]
-    * @param int $componentId
-    * @return string JSON
-    */
-    public function getDataView($componentId)
-    {
-        if (is_null($component = Component::with('assets')->find($componentId))) {
-            // Redirect to the component management page with error
-            return redirect()->route('components.index')->with('error', trans('admin/components/message.not_found'));
-        }
-
-        if (!Company::isCurrentUserHasAccess($component)) {
-            return ['total' => 0, 'rows' => []];
-        }
-        $this->authorize('view', $component);
-
-        $rows = array();
-        $all_custom_fields = CustomField::all(); // Cached for table;
-        foreach ($component->assets as $component_assignment) {
-            $rows[] = $component_assignment->present()->forDataTable($all_custom_fields);
-        }
-
-        $componentCount = $component->assets->count();
-        $data = array('total' => $componentCount, 'rows' => $rows);
-        return $data;
-    }
 }

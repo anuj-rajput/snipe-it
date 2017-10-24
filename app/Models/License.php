@@ -31,10 +31,10 @@ class License extends Depreciable
     protected $rules = array(
         'name'   => 'required|string|min:3|max:255',
         'seats'   => 'required|min:1|max:1000000|integer',
-        'license_email'   => 'email|min:0|max:120',
-        'license_name'   => 'string|min:0|max:100',
-        'note'   => 'string',
-        'notes'   => 'string|min:0',
+        'license_email'   => 'email|nullable|max:120',
+        'license_name'   => 'string|nullable|max:100',
+        'note'   => 'string|nullable',
+        'notes'   => 'string|nullable',
         'company_id' => 'integer|nullable',
     );
 
@@ -332,14 +332,17 @@ class License extends Depreciable
         return $this->belongsTo('\App\Models\Supplier', 'supplier_id');
     }
 
+    /*
+     * Get the next available free seat - used by
+     * the API to populate next_seat
+     */
     public function freeSeat()
     {
-        $seat = LicenseSeat::where('license_id', '=', $this->id)
+        return $this->licenseseats()
                     ->whereNull('deleted_at')
                     ->whereNull('assigned_to')
                     ->whereNull('asset_id')
                     ->first();
-        return $seat->id;
     }
 
     public static function getExpiringLicenses($days = 60)

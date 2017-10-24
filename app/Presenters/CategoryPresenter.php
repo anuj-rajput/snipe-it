@@ -41,42 +41,43 @@ class CategoryPresenter extends Presenter
             ], [
                 "field" => "assets_count",
                 "searchable" => false,
-                "sortable" => false,
+                "sortable" => true,
                 "title" => trans('general.assets'),
                 "visible" => true
             ], [
                 "field" => "accessories_count",
                 "searchable" => false,
-                "sortable" => false,
+                "sortable" => true,
                 "title" => trans('general.accessories'),
                 "visible" => true
             ], [
                 "field" => "consumables_count",
                 "searchable" => false,
-                "sortable" => false,
+                "sortable" => true,
                 "title" => trans('general.consumables'),
                 "visible" => true
             ], [
                 "field" => "components_count",
                 "searchable" => false,
-                "sortable" => false,
+                "sortable" => true,
                 "title" => trans('general.components'),
                 "visible" => true
             ], [
-                "field" => "use_default_eula",
+                "field" => "eula",
                 "searchable" => false,
                 "sortable" => false,
                 "title" => trans('admin/categories/table.eula_text'),
                 "visible" => false,
                 "formatter" => 'trueFalseFormatter',
-            ], [
+            ],  [
                 "field" => "require_acceptance",
                 "searchable" => false,
-                "sortable" => false,
+                "sortable" => true,
                 "title" => trans('admin/categories/table.require_acceptance'),
                 "visible" => true,
                 "formatter" => 'trueFalseFormatter',
-            ], [
+            ],
+           [
                 "field" => "actions",
                 "searchable" => false,
                 "sortable" => false,

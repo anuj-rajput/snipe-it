@@ -60,7 +60,9 @@
                                         <td><a href="{{ $asset->present()->viewUrl() }}">{{ $asset->serial }}</a></td>
 
                                         <td>
-                                            {!! $asset->assetLoc->present()->nameUrl() !!}
+                                            @if ($asset->assetloc)
+                                            {!! $asset->assetloc->present()->nameUrl() !!}
+                                            @endif
                                         </td>
                                         @if ($asset->assigned_to != '' && $asset->assigned_to > 0)
                                             <td>Checked out</td>
@@ -149,7 +151,7 @@
 
 
 @section('moar_scripts')
-<script>
+<script nonce="{{ csrf_token() }}">
 
     $( "a[name='Request']").click(function(event) {
         // event.preventDefault();

@@ -13,27 +13,25 @@
     <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
 
     <!-- Select2 -->
-    <link rel="stylesheet" href="{{ asset('js/plugins/select2/select2.min.css') }}">
+    <link rel="stylesheet" href="{{ url(asset('js/plugins/select2/select2.min.css')) }}">
 
     <!-- iCheck for checkboxes and radio inputs -->
-    <link rel="stylesheet" href="{{ asset('js/plugins/iCheck/all.css') }}">
+    <link rel="stylesheet" href="{{ url(asset('js/plugins/iCheck/all.css')) }}">
 
     <!-- bootstrap tables CSS -->
-    <link rel="stylesheet" href="{{ asset('css/bootstrap-table.css') }}">
+    <link rel="stylesheet" href="{{ url(asset('css/bootstrap-table.css')) }}">
 
-    <link rel="stylesheet" href="{{ mix('css/dist/all.css') }}">
+    <link rel="stylesheet" href="{{ url(mix('css/dist/all.css')) }}">
 
-    <link rel="shortcut icon" type="image/ico" href="{{ asset('favicon.ico') }}">
+    <link rel="shortcut icon" type="image/ico" href="{{ url(asset('favicon.ico')) }}">
 
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-      <script>
-          window.Laravel = { csrfToken: '{{ csrf_token() }}' };
-      </script>
+    <script nonce="{{ csrf_token() }}">
+      window.Laravel = { csrfToken: '{{ csrf_token() }}' };
+    </script>
 
-
-
-      <style>
+    <style nonce="{{ csrf_token() }}">
         @if ($snipeSettings)
             @if ($snipeSettings->header_color)
             .main-header .navbar, .main-header .logo {
@@ -68,28 +66,26 @@
     }
     </style>
 
-
-
-    <script>
+    <script nonce="{{ csrf_token() }}">
           window.snipeit = {
               settings: {
                   "per_page": {{ $snipeSettings->per_page }}
               }
           };
-      </script>
-
+    </script>
+    <!-- Add laravel route sinto javascript  Primarily useful for vue.-->
+    @routes
       <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
       <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
       <!--[if lt IE 9]>
 
       @if ($snipeSettings->load_remote=='1')
-
-            <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
-            <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+            <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js" integrity="sha384-qFIkRsVO/J5orlMvxK1sgAt2FXT67og+NyFTITYzvbIP1IJavVEKZM7YWczXkwpB" crossorigin="anonymous"></script>
+            <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js" integrity="sha384-ZoaMbDF+4LeFxg6WdScQ9nnR1QC2MIRxA1O9KWEXQwns1G8UNyIEZIQidzb0T1fo" crossorigin="anonymous"></script>
 
        @else
-            <script src="{{ asset('js/html5shiv.js') }}"></script>
-            <script src="{{ asset('js/respond.js') }}"></script>
+            <script src="{{ url(asset('js/html5shiv.js')) }}" nonce="{{ csrf_token() }}"></script>
+            <script src="{{ url(asset('js/respond.js')) }}" nonce="{{ csrf_token() }}"></script>
        @endif
        <![endif]-->
   </head>
@@ -112,7 +108,7 @@
                  @if ($snipeSettings->brand == '3')
                       <a class="logo navbar-brand no-hover" href="{{ url('/') }}">
                           @if ($snipeSettings->logo!='')
-                          <img class="navbar-brand-img" src="{{ url('/') }}/uploads/{{ $snipeSettings->logo }}">
+                          <img class="navbar-brand-img" style="max-height: 50px;" src="{{ url('/') }}/uploads/{{ $snipeSettings->logo }}">
                           @endif
                           {{ $snipeSettings->site_name }}
                       </a>
@@ -307,7 +303,7 @@
                      </li>
                      <li>
                          <a href="{{ route('account.password.index') }}">
-                             <i class="fa fa-asterisk"></i> @lang('general.changepassword')
+                             <i class="fa fa-asterisk fa-fw"></i> @lang('general.changepassword')
                          </a>
                      </li>
 
@@ -383,18 +379,17 @@
 
 
                   <li{!! (Request::query('status') == 'Deployed' ? ' class="active"' : '') !!}>
-                    <a href="{{ url('hardware?status=Deployed') }}"><i class="fa fa-circle-o text-blue"></i>@lang('general.deployed')
+                    <a href="{{ url('hardware?status=Deployed') }}"><i class="fa fa-circle-o text-blue"></i>@lang('general.all') @lang('general.deployed')
                     </a>
                   </li>
                   <li{!! (Request::query('status') == 'RTD' ? ' class="active"' : '') !!}>
                     <a href="{{ url('hardware?status=RTD') }}">
-                        <i class="fa fa-circle-o text-green"></i>
-                    @lang('general.ready_to_deploy')</a>
+                        <i class="fa fa-circle-o text-green"></i>@lang('general.all') @lang('general.ready_to_deploy')</a>
                   </li>
-                  <li{!! (Request::query('status') == 'Pending' ? ' class="active"' : '') !!}><a href="{{ url('hardware?status=Pending') }}"><i class="fa fa-circle-o text-orange"></i>@lang('general.pending')</a></li>
-                  <li{!! (Request::query('status') == 'Undeployable' ? ' class="active"' : '') !!} ><a href="{{ url('hardware?status=Undeployable') }}"><i class="fa fa-times text-red"></i>@lang('general.undeployable')</a></li>
-                  <li{!! (Request::query('status') == 'Archived' ? ' class="active"' : '') !!}><a href="{{ url('hardware?status=Archived') }}"><i class="fa fa-times text-red"></i>@lang('admin/hardware/general.archived')</a></li>
-                    <li{!! (Request::query('status') == 'Requestable' ? ' class="active"' : '') !!}><a href="{{ url('hardware?status=Requestable') }}"><i class="fa fa-check text-blue"></i> @lang('admin/hardware/general.requestable')</a></li>
+                  <li{!! (Request::query('status') == 'Pending' ? ' class="active"' : '') !!}><a href="{{ url('hardware?status=Pending') }}"><i class="fa fa-circle-o text-orange"></i>@lang('general.all') @lang('general.pending')</a></li>
+                  <li{!! (Request::query('status') == 'Undeployable' ? ' class="active"' : '') !!} ><a href="{{ url('hardware?status=Undeployable') }}"><i class="fa fa-times text-red"></i>@lang('general.all') @lang('general.undeployable')</a></li>
+                  <li{!! (Request::query('status') == 'Archived' ? ' class="active"' : '') !!}><a href="{{ url('hardware?status=Archived') }}"><i class="fa fa-times text-red"></i>@lang('general.all') @lang('admin/hardware/general.archived')</a></li>
+                    <li{!! (Request::query('status') == 'Requestable' ? ' class="active"' : '') !!}><a href="{{ url('hardware?status=Requestable') }}"><i class="fa fa-check text-blue"></i>@lang('admin/hardware/general.requestable')</a></li>
 
                   <li class="divider">&nbsp;</li>
                     @can('checkout', \App\Models\Asset::class)
@@ -625,11 +620,11 @@
       <footer class="main-footer hidden-print">
         <div class="pull-right hidden-xs">
           <b>Version</b> {{ config('version.app_version') }}  build {{ config('version.build_version') }} ({{ config('version.hash_version') }})
-          <a target="_blank" class="btn btn-default btn-xs" href="https://snipe-it.readme.io/docs/overview">User's Manual</a>
-          <a target="_blank" class="btn btn-default btn-xs" href="https://snipeitapp.com/support/">Report a Bug</a>
+          <a target="_blank" class="btn btn-default btn-xs" href="https://snipe-it.readme.io/docs/overview" rel="noopener">User's Manual</a>
+          <a target="_blank" class="btn btn-default btn-xs" href="https://snipeitapp.com/support/" rel="noopener">Report a Bug</a>
         </div>
-        <a target="_blank" href="https://snipeitapp.com">Snipe-IT</a> is an open source
-          project, made with <i class="fa fa-heart" style="color: #a94442; font-size: 10px"></i> by <a href="https://twitter.com/snipeyhead">@snipeyhead</a> under the <a href="https://www.gnu.org/licenses/agpl-3.0.en.html">AGPL3 license</a>.
+        <a target="_blank" href="https://snipeitapp.com" rel="noopener">Snipe-IT</a> is an open source
+          project, made with <i class="fa fa-heart" style="color: #a94442; font-size: 10px"></i> by <a href="https://twitter.com/snipeyhead" rel="noopener">@snipeyhead</a> under the <a href="https://www.gnu.org/licenses/agpl-3.0.en.html" rel="noopener">AGPL3 license</a>.
       </footer>
 
 
@@ -662,8 +657,8 @@
 
 
 
-    <script src="{{ mix('js/dist/all.js') }}"></script>
-    <script>
+    <script src="{{ url(mix('js/dist/all.js')) }}" nonce="{{ csrf_token() }}"></script>
+    <script nonce="{{ csrf_token() }}">
         $(function () {
             var datepicker = $.fn.datepicker.noConflict(); // return $.fn.datepicker to previously assigned value
             $.fn.bootstrapDP = datepicker;
@@ -678,14 +673,18 @@
     @section('moar_scripts')
     @show
 
-    <script>
+    <script nonce="{{ csrf_token() }}">
         $(function () {
             $('[data-toggle="tooltip"]').tooltip();
         })
+        $(document).on('click', '[data-toggle="lightbox"]', function(event) {
+            event.preventDefault();
+            $(this).ekkoLightbox();
+        });
     </script>
 
     @if ((Session::get('topsearch')=='true') || (Request::is('/')))
-    <script>
+    <script nonce="{{ csrf_token() }}">
          $("#tagSearch").focus();
     </script>
     @endif

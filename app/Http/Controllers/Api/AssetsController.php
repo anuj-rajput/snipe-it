@@ -86,19 +86,19 @@ class AssetsController extends Controller
         $assets = Company::scopeCompanyables(Asset::select('assets.*'))->with(
             'assetloc', 'assetstatus', 'defaultLoc', 'assetlog', 'company',
             'model.category', 'model.manufacturer', 'model.fieldset','supplier');
-        // If we should search on everything
-        if (($request->has('search')) && (count($filter) == 0)) {
+
+
+        if (count($filter) > 0) {
+            $assets->ByFilter($filter);
+        } elseif ($request->has('search')) {
             $assets->TextSearch($request->input('search'));
-        // otherwise loop through the filters and search strictly on them
-        } else {
-            if (count($filter) > 0) {
-                $assets->ByFilter($filter);
-            }
         }
+
+
 
         // These are used by the API to query against specific ID numbers
         if ($request->has('status_id')) {
-            $assets->where('status_id', '=', $request->input('status_id'));
+            $assets->where('assets.status_id', '=', $request->input('status_id'));
         }
 
         if ($request->has('model_id')) {
@@ -125,7 +125,11 @@ class AssetsController extends Controller
             $assets->ByManufacturer($request->input('manufacturer_id'));
         }
 
-        $request->has('order_number') ? $assets = $assets->where('order_number', '=', e($request->get('order_number'))) : '';
+        if ($request->has('depreciation_id')) {
+            $assets->ByDepreciationId($request->input('depreciation_id'));
+        }
+
+        $request->has('order_number') ? $assets = $assets->where('assets.order_number', '=', e($request->get('order_number'))) : '';
 
         $offset = request('offset', 0);
         $limit = $request->input('limit', 50);
@@ -133,36 +137,76 @@ class AssetsController extends Controller
 
 
         // This is used by the sidenav, mostly
+
+        // We switched from using query scopes here because of a Laravel bug
+        // related to fulltext searches on complex queries.
+        // I am sad. :(
         switch ($request->input('status')) {
             case 'Deleted':
                 $assets->withTrashed()->Deleted();
                 break;
             case 'Pending':
-                $assets->Pending();
+                $assets->join('status_labels AS status_alias',function ($join) {
+                    $join->on('status_alias.id', "=", "assets.status_id")
+                        ->where('status_alias.deployable','=',0)
+                        ->where('status_alias.pending','=',1)
+                        ->where('status_alias.archived', '=', 0);
+                });
                 break;
             case 'RTD':
-                $assets->RTD();
+                $assets->whereNull('assets.assigned_to')
+                ->join('status_labels AS status_alias',function ($join) {
+                    $join->on('status_alias.id', "=", "assets.status_id")
+                        ->where('status_alias.deployable','=',1)
+                        ->where('status_alias.pending','=',0)
+                        ->where('status_alias.archived', '=', 0);
+                });
                 break;
             case 'Undeployable':
                 $assets->Undeployable();
                 break;
             case 'Archived':
-                $assets->Archived();
+                $assets->join('status_labels AS status_alias',function ($join) {
+                    $join->on('status_alias.id', "=", "assets.status_id")
+                        ->where('status_alias.deployable','=',0)
+                        ->where('status_alias.pending','=',0)
+                        ->where('status_alias.archived', '=', 1);
+                });
                 break;
             case 'Requestable':
-                $assets->RequestableAssets();
+                $assets->where('assets.requestable', '=', 1)
+                    ->join('status_labels AS status_alias',function ($join) {
+                    $join->on('status_alias.id', "=", "assets.status_id")
+                        ->where('status_alias.deployable','=',1)
+                        ->where('status_alias.pending','=',0)
+                        ->where('status_alias.archived', '=', 0);
+                });
+
                 break;
             case 'Deployed':
-                $assets->Deployed();
+                // more sad, horrible workarounds for laravel bugs when doing full text searches
+                $assets->where('assets.assigned_to', '>', '0');
                 break;
+            default:
+                // terrible workaround for complex-query Laravel bug in fulltext
+                $assets->join('status_labels AS status_alias',function ($join) {
+                    $join->on('status_alias.id', "=", "assets.status_id")
+                        ->where('status_alias.archived', '=', 0);
+                });
         }
 
 
+        // This is kinda gross, but we need to do this because the Bootstrap Tables
+        // API passes custom field ordering as custom_fields.fieldname, and we have to strip
+        // that out to let the default sorter below order them correctly on the assets table.
+        $sort_override = str_replace('custom_fields.','', $request->input('sort')) ;
 
-        // This handles all of the pivot sorting (versus the assets.* fields in the allowed_columns array)
-        $column_sort = in_array($request->input('sort'), $allowed_columns) ? $request->input('sort') : 'assets.created_at';
-
-        switch ($request->input('sort')) {
+        // This handles all of the pivot sorting (versus the assets.* fields
+        // in the allowed_columns array)
+        $column_sort = in_array($sort_override, $allowed_columns) ? $sort_override : 'assets.created_at';
+        
+        
+        switch ($sort_override) {
             case 'model':
                 $assets->OrderModels($order);
                 break;
@@ -413,16 +457,28 @@ class AssetsController extends Controller
 
         $this->authorize('checkout', $asset);
 
+        $error_payload = [];
+        $error_payload['asset'] = [
+            'id' => $asset->id,
+            'asset_tag' => $asset->asset_tag,
+        ];
         if ($request->has('user_id')) {
             $target = User::find($request->input('user_id'));
+            $error_payload['target_id'] = $request->input('user_id');
+            $error_payload['target_type'] = User::class;
+        // Don't let the user check an asset out to itself
         } elseif ($request->has('asset_id')) {
-            $target = Asset::find($request->input('asset_id'));
+            $target = Asset::where('id','!=',$asset_id)->find($request->input('asset_id'));
+            $error_payload['target_id'] = $request->input('asset_id');
+            $error_payload['target_type'] = Asset::class;
         } elseif ($request->has('location_id')) {
             $target = Location::find($request->input('location_id'));
+            $error_payload['target_id'] = $request->input('location_id');
+            $error_payload['target_type'] = Location::class;
         }
 
         if (!isset($target)) {
-            return response()->json(Helper::formatStandardApiResponse('error', ['asset'=> e($asset->asset_tag)], 'No valid checkout target specified for asset '.e($asset->asset_tag).'.'));
+            return response()->json(Helper::formatStandardApiResponse('error', $error_payload, 'No valid checkout target specified for asset '.e($asset->asset_tag).'.'));
         }
 
         $checkout_at = request('checkout_at', date("Y-m-d H:i:s"));
@@ -481,6 +537,9 @@ class AssetsController extends Controller
             $data['item_tag'] = $asset->asset_tag;
             $data['item_serial'] = $asset->serial;
             $data['note'] = $logaction->note;
+            $data['manufacturer_name'] = $asset->model->manufacturer->name;
+            $data['model_name'] = $asset->model->name;
+            $data['model_number'] = $asset->model->model_number;
 
             if ((($asset->checkin_email()=='1')) && (isset($user)) && (!config('app.lock_passwords'))) {
                 Mail::send('emails.checkin-asset', $data, function ($m) use ($user) {

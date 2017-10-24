@@ -98,11 +98,15 @@ class AppServiceProvider extends ServiceProvider
         if (config('app.debug')) {
             $log_level = 'debug';
         } else {
-            if (config('log-level')) {
-                $log_level = config('log-level');
+            if (config('app.log_level')) {
+                $log_level = config('app.log_level');
             } else {
                 $log_level = 'error';
             }
+        }
+
+        if (($this->app->environment('production'))  && (config('services.rollbar.access_token'))){
+            $this->app->register(\Jenssegers\Rollbar\RollbarServiceProvider::class);
         }
 
         foreach ($monolog->getHandlers() as $handler) {
