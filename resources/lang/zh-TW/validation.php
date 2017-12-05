@@ -67,6 +67,7 @@ return array(
     'not_in'               => '選擇的 :attribute 無效',
     'numeric'              => ':attribute 必須是數字',
     'present'              => '：屬性字段必須存在。',
+    'valid_regex'          => 'That is not a valid regex. ',
     'regex'                => ':attribute 格式不正確',
     'required'             => ':attribute 欄位必填',
     'required_if'          => ':attribute 欄位在 :other 是 :value 時是必填的',
@@ -87,6 +88,7 @@ return array(
     'unique'               => ':attribute 已被採用',
     'uploaded'             => ':attribute 上傳失敗',
     'url'                  => ':attribute 格式不正確',
+    "unique_undeleted"     => ":attribute 必須是唯一值",
 
     /*
     |--------------------------------------------------------------------------
@@ -117,7 +119,6 @@ return array(
         "hashed_pass"      => "當前密碼不正確！",
         'dumbpwd'          => '該密碼太常見。',
         "statuslabel_type" => "您必須選擇一個有效的狀態標籤",
-        "unique_undeleted" => ":attribute 必須是唯一值",
     ],
 
     /*

@@ -21,7 +21,7 @@
 
             <div class="box box-default">
                 <div class="box-header with-border">
-                    <h3 class="box-title"> {{ $licenseSeat->license->name }}</h3>
+                    <h3 class="box-title"> {{ $license->name }}</h3>
                 </div>
                 <div class="box-body">
 
@@ -29,7 +29,7 @@
                     <div class="form-group">
                         <label class="col-sm-3 control-label">{{ trans('admin/hardware/form.name') }}</label>
                         <div class="col-md-6">
-                            <p class="form-control-static">{{ $licenseSeat->license->name }}</p>
+                            <p class="form-control-static">{{ $license->name }}</p>
                         </div>
                     </div>
 
@@ -37,24 +37,22 @@
                     <div class="form-group">
                         <label class="col-sm-3 control-label">{{ trans('admin/hardware/form.serial') }}</label>
                         <div class="col-md-9">
-                            <p class="form-control-static" style="word-wrap: break-word;">{{ $licenseSeat->license->serial }}</p>
+                            <p class="form-control-static" style="word-wrap: break-word;">{{ $license->serial }}</p>
                         </div>
                     </div>
 
-                @include ('partials.forms.edit.asset-select', ['translated_name' => trans('admin/licenses/form.asset'), 'fieldname' => 'asset_id'])
+                    @include ('partials.forms.checkout-selector', ['user_select' => 'true','asset_select' => 'true', 'location_select' => 'false'])
 
-                @include ('partials.forms.edit.user-select', ['translated_name' => trans('admin/hardware/form.checkout_to'), 'fieldname' => 'assigned_to'])
+                    @include ('partials.forms.edit.user-select', ['translated_name' => trans('general.user'), 'fieldname' => 'assigned_to', 'required'=>'true'])
 
-                    <p class="col-md-offset-3 help-block">
-                    {{ trans('admin/licenses/form.checkout_help') }}
-                    </p>
+                    @include ('partials.forms.edit.asset-select', ['translated_name' => trans('admin/licenses/form.asset'), 'fieldname' => 'asset_id', 'style' => 'display:none;'])
 
 
                     <!-- Note -->
                     <div class="form-group {{ $errors->has('note') ? 'error' : '' }}">
                         <label for="note" class="col-md-3 control-label">{{ trans('admin/hardware/form.notes') }}</label>
                         <div class="col-md-7">
-                            <textarea class="col-md-6 form-control" id="note" name="note">{{ Input::old('note', $licenseSeat->note) }}</textarea>
+                            <textarea class="col-md-6 form-control" id="note" name="note">{{ Input::old('note') }}</textarea>
                             {!! $errors->first('note', '<span class="alert-msg"><i class="fa fa-times"></i> :message</span>') !!}
                         </div>
                     </div>

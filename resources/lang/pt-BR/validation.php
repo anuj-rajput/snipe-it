@@ -67,6 +67,7 @@ return array(
     'not_in'               => 'O :attribute selecionado é inválido.',
     'numeric'              => 'O :attribute deve ser um número.',
     'present'              => 'O campo: atributo deve estar presente.',
+    'valid_regex'          => 'That is not a valid regex. ',
     'regex'                => 'O formato de :attribute é inválido.',
     'required'             => 'O campo de :attribute é requerido.',
     'required_if'          => 'O campo de :attribute é requerido quando :other é :value.',
@@ -87,6 +88,7 @@ return array(
     'unique'               => 'O :attribute já foi tomado.',
     'uploaded'             => 'O atributo: não foi possível carregar.',
     'url'                  => 'O formato de :attribute é inválido.',
+    "unique_undeleted"     => "The :attribute must be unique.",
 
     /*
     |--------------------------------------------------------------------------
@@ -117,7 +119,6 @@ return array(
         "hashed_pass"      => "Sua senha atual está incorreta",
         'dumbpwd'          => 'Essa senha é muito comum.',
         "statuslabel_type" => "Você deve selecionar um tipo de etiqueta de status válido",
-        "unique_undeleted" => "O atributo deve ser exclusivo.",
     ],
 
     /*

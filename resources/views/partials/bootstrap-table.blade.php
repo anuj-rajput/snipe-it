@@ -32,7 +32,7 @@
 
 
 
-$('.snipe-table').bootstrapTable('destroy').bootstrapTable({
+        $('.snipe-table').bootstrapTable('destroy').bootstrapTable({
         classes: 'table table-responsive table-no-bordered',
         undefinedText: '',
         iconsPrefix: 'fa',
@@ -46,30 +46,27 @@ $('.snipe-table').bootstrapTable('destroy').bootstrapTable({
         sidePagination: '{{ (isset($clientSearch)) ? 'client' : 'server' }}',
         sortable: true,
 
-
        @if (!isset($simple_view))
 
         showRefresh: true,
         pagination: true,
-        pageSize: {{ $snipeSettings->per_page }},
-
+        pageSize: 20,
         cookie: true,
         cookieExpire: '2y',
         showExport: true,
-
-    stickyHeader: true,
-    stickyHeaderOffsetY: stickyHeaderOffsetY + 'px',
+        stickyHeader: true,
+        stickyHeaderOffsetY: stickyHeaderOffsetY + 'px',
 
 
         @if (isset($showFooter))
-            showFooter: true,
+        showFooter: true,
         @endif
         showColumns: true,
         trimOnSearch: false,
 
-            @if (isset($multiSort))
-            showMultiSort: true,
-            @endif
+        @if (isset($multiSort))
+        showMultiSort: true,
+        @endif
 
             @if (isset($exportFile))
             exportDataType: 'all',
@@ -97,7 +94,7 @@ $('.snipe-table').bootstrapTable('destroy').bootstrapTable({
         @endif
 
         @if (isset($columns))
-            columns: {!! $columns !!},
+         columns: {!! $columns !!},
         @endif
 
         mobileResponsive: true,
@@ -109,7 +106,7 @@ $('.snipe-table').bootstrapTable('destroy').bootstrapTable({
         formatLoadingMessage: function () {
             return '<h4><i class="fa fa-spinner fa-spin" aria-hidden="true"></i> Loading... please wait.... </h4>';
         },
-        pageList: ['30','50','100','150','200','500'],
+        pageList: ['20', '30','50','100','150','200'],
         icons: {
             advancedSearchIcon: 'fa fa-search-plus',
             paginationSwitchDown: 'fa-caret-square-o-down',
@@ -121,7 +118,7 @@ $('.snipe-table').bootstrapTable('destroy').bootstrapTable({
             minus: 'fa fa-minus',
             @endif
             refresh: 'fa-refresh'
-        },
+        }
 
     });
     }
@@ -279,6 +276,14 @@ $('.snipe-table').bootstrapTable('destroy').bootstrapTable({
 
     }
 
+    // This just prints out the item type in the activity report
+    function itemTypeFormatter(value, row) {
+
+        if ((row) && (row.item) && (row.item.type)) {
+            return row.item.type;
+        }
+    }
+
 
     function genericCheckinCheckoutFormatter(destination) {
         return function (value,row) {
@@ -302,7 +307,7 @@ $('.snipe-table').bootstrapTable('destroy').bootstrapTable({
                 if (row.assigned_to) {
                     return '<nobr><a href="{{ url('/') }}/' + destination + '/' + row.id + '/checkin" class="btn btn-sm bg-purple" data-tooltip="true" title="Check this item in so it is available for re-imaging, re-issue, etc.">{{ trans('general.checkin') }}</a>';
                 } else if (row.assigned_pivot_id) {
-                    return '<nobr><a href="{{ url('/') }}/' + destination + '/' + row.assigned_pivot_id + '/checkin" class="btn btn-sm bg-purpley" data-tooltip="true" title="Check this item in so it is available for re-imaging, re-issue, etc.">{{ trans('general.checkin') }}</a>';
+                    return '<nobr><a href="{{ url('/') }}/' + destination + '/' + row.assigned_pivot_id + '/checkin" class="btn btn-sm bg-purple" data-tooltip="true" title="Check this item in so it is available for re-imaging, re-issue, etc.">{{ trans('general.checkin') }}</a>';
                 }
 
             } 
@@ -357,7 +362,17 @@ $('.snipe-table').bootstrapTable('destroy').bootstrapTable({
             // (for example, the locked icon for encrypted fields)
             var field_column_plain = field_column.replace(/<(?:.|\n)*?> ?/gm, '');
             if ((row.custom_fields) && (row.custom_fields[field_column_plain])) {
+
+                // If the field type needs special formatting, do that here
+                if ((row.custom_fields[field_column_plain].field_format) && (row.custom_fields[field_column_plain].value)) {
+                    if (row.custom_fields[field_column_plain].field_format=='URL') {
+                        return '<a href="' + row.custom_fields[field_column_plain].value + '" target="_blank" rel="noopener">' + row.custom_fields[field_column_plain].value + '</a>';
+                    } else if (row.custom_fields[field_column_plain].field_format=='EMAIL') {
+                        return '<a href="mailto:' + row.custom_fields[field_column_plain].value + '">' + row.custom_fields[field_column_plain].value + '</a>';
+                    }
+                }
                 return row.custom_fields[field_column_plain].value;
+
             }
 
     }
@@ -432,7 +447,7 @@ $('.snipe-table').bootstrapTable('destroy').bootstrapTable({
     }
 
     function assetCompanyObjFilterFormatter(value, row) {
-        if (row.company) {
+        if ((row) && (row.company)) {
             return '<a href="{{ url('/') }}/hardware/?company_id=' + row.company.id + '"> ' + row.company.name + '</a>';
         }
     }
@@ -447,7 +462,7 @@ $('.snipe-table').bootstrapTable('destroy').bootstrapTable({
 
     function employeeNumFormatter(value, row) {
 
-        if ((row.assigned_to) && ((row.assigned_to.employee_number))) {
+        if ((row) && (row.assigned_to) && ((row.assigned_to.employee_number))) {
             return '<a href="{{ url('/') }}/users/' + row.assigned_to.id + '"> ' + row.assigned_to.employee_number + '</a>';
         }
     }

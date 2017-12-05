@@ -67,6 +67,7 @@ return array(
     'not_in'               => 'Выбранный :attribute неправильный.',
     'numeric'              => ':attribute должно быть числом.',
     'present'              => 'Поле атрибута: должно присутствовать.',
+    'valid_regex'          => 'That is not a valid regex. ',
     'regex'                => 'Неправильный формат :attribute.',
     'required'             => ':attribute обязательное поле.',
     'required_if'          => ':attribute обязательное поле, когда :other :value.',
@@ -87,6 +88,7 @@ return array(
     'unique'               => ':attribute уже занят.',
     'uploaded'             => 'Атрибут: не удалось загрузить.',
     'url'                  => 'Неправильный формат :attribute.',
+    "unique_undeleted"     => "The :attribute must be unique.",
 
     /*
     |--------------------------------------------------------------------------
@@ -117,7 +119,6 @@ return array(
         "hashed_pass"      => "Ваш текущий пароль неверен",
         'dumbpwd'          => 'Этот пароль слишком распространен.',
         "statuslabel_type" => "Вы должны выбрать допустимый тип метки статуса",
-        "unique_undeleted" => "Атрибут: должен быть уникальным.",
     ],
 
     /*

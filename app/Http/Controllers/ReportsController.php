@@ -156,6 +156,7 @@ class ReportsController extends Controller
                     trans('admin/hardware/form.order'),
                     trans('general.supplier'),
                     trans('admin/hardware/table.checkoutto'),
+                    trans('general.type'),
                     trans('admin/hardware/table.checkout_date'),
                     trans('admin/hardware/table.location'),
                     trans('general.notes'),
@@ -166,6 +167,8 @@ class ReportsController extends Controller
                 fputcsv($handle, $headers);
 
                 foreach ($assets as $asset) {
+
+
                     // Add a new row with data
                     $values=[
                         ($asset->company) ? $asset->company->name : '',
@@ -175,14 +178,15 @@ class ReportsController extends Controller
                         ($asset->model->model_number) ? $asset->model->model_number : '',
                         ($asset->name) ? $asset->name : '',
                         ($asset->serial) ? $asset->serial : '',
-                        ($asset->assetstatus) ? e($asset->assetstatus->name) : '',
+                        ($asset->assetstatus) ? e($asset->present()->statusText) : '',
                         ($asset->purchase_date) ? e($asset->purchase_date) : '',
                         ($asset->purchase_cost > 0) ? Helper::formatCurrencyOutput($asset->purchase_cost) : '',
                         ($asset->order_number) ? e($asset->order_number) : '',
                         ($asset->supplier) ? e($asset->supplier->name) : '',
-                        ($asset->assignedTo) ? e($asset->assignedTo->present()->name()) : '',
+                        ($asset->checkedOutToUser() && $asset->assigned) ? e($asset->assigned->getFullNameAttribute()) : ($asset->assigned ? e($asset->assigned->display_name) : ''),
+                        ($asset->checkedOutToUser() && $asset->assigned) ? 'user' : e($asset->assignedType()),
                         ($asset->last_checkout!='') ? e($asset->last_checkout) : '',
-                        ($asset->location) ? e($asset->location->present()->name()) : '',
+                        ($asset->location) ? e($asset->location->name) : '',
                         ($asset->notes) ? e($asset->notes) : '',
                     ];
                     foreach ($customfields as $field) {
@@ -582,7 +586,12 @@ class ReportsController extends Controller
             if (e(Input::get('username')) == '1') {
                 // Only works if we're checked out to a user, not anything else.
                 if ($asset->checkedOutToUser()) {
-                    $row[] = '"' .e($asset->assignedto->username). '"';
+                    if ($asset->assignedto) {
+                        $row[] = '"' .e($asset->assignedto->username). '"';
+                    } else {
+                        $row[] = ''; // Empty string if unassigned
+                    }
+
                 } else {
                     $row[] = ''; // Empty string if unassigned
                 }
@@ -591,7 +600,12 @@ class ReportsController extends Controller
             if (e(Input::get('employee_num')) == '1') {
                 // Only works if we're checked out to a user, not anything else.
                 if ($asset->checkedOutToUser()) {
-                    $row[] = '"' .e($asset->assignedto->employee_num). '"';
+                    if ($asset->assignedto) {
+                        $row[] = '"' .e($asset->assignedto->employee_num). '"';
+                    } else {
+                        $row[] = ''; // Empty string if unassigned
+                    }
+
                 } else {
                     $row[] = ''; // Empty string if unassigned
                 }
